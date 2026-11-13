@@ -14,8 +14,8 @@ The context matters:
 - **Keys:** a Wiley TDM token, an Elsevier API key and an OpenAlex key were configured.
 - **Network:** some runs were on an institutional network, which Elsevier subscription XML needs.
 - **Engine versions:** the runs span three days of development. Some channel names in older reports (`gfz_repo`,
-  `hal_api`, `datacite_repo`, `crossref_preprint`, `s2_oa`) are separate steps that the current
-  `green_oa_cascade` runs as one.
+  `hal_api`, `datacite_repo`, `crossref_preprint`) are separate steps that the current `green_oa_cascade` runs as
+  one; `s2_oa` (Semantic Scholar) has since been dropped.
 
 A paper's result is its best outcome over all runs (an open copy beats a licensed copy, which beats nothing).
 
@@ -154,6 +154,6 @@ Every request in every run. A low rate is not always bad: some channels are chea
 - **Etiquette gaps.** The Crossref interval (0.25 s) does not distinguish search requests, which have a public
   limit of 1 per second. In practice they are interleaved with other hosts, but large citation lists should set
   `SEISMO_HARVEST_UA` with a `mailto`. The NCBI E-utilities fallback sends no `tool`/`email` parameters.
-- **Dead or partial channels.** `s2_oa` (Semantic Scholar) is registered but its resolver is not wired. The
-  `ethrc` channel serves one institution's repository; other DSpace repositories are reached only through OpenAlex
-  locations and the URL rewriter.
+- **Partial channels.** The `ethrc` channel serves one institution's repository; other DSpace repositories are
+  reached only through OpenAlex locations and the URL rewriter. (`s2_oa`, Semantic Scholar, has been dropped: its 27
+  attempts in these runs found no copy, and the current engine never called it.)

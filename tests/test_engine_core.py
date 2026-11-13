@@ -354,3 +354,16 @@ def test_load_harvest_keys_never_overrides_environment(tmp_path, monkeypatch):
     import os
     assert os.environ["WILEY_TDM_TOKEN"] == "from-env" and os.environ["ELSEVIER_API_KEY"] == "els-file"
     assert "OTHER" not in os.environ  # only the known key names are imported
+
+
+def test_load_harvest_keys_treats_an_empty_variable_as_unset(tmp_path, monkeypatch):
+    """A 'WILEY_TDM_TOKEN=' line copied into .env (python-dotenv sets "") must not shadow keys.env (2026-11-13)."""
+    import os
+    keys = tmp_path / "keys.env"
+    keys.write_text('export WILEY_TDM_TOKEN="from-file"\n')
+    monkeypatch.setenv("WILEY_TDM_TOKEN", "")
+    monkeypatch.setenv("ELSEVIER_API_KEY", "  ")
+    monkeypatch.setenv("SEISMO_HARVEST_KEYS_FILE", str(keys))
+    assert fb.load_harvest_keys() == {"WILEY_TDM_TOKEN": True, "ELSEVIER_API_KEY": False}
+    assert os.environ["WILEY_TDM_TOKEN"] == "from-file"
+    assert "ELSEVIER_API_KEY" not in os.environ  # blank and in no keys file: unset, not "  "

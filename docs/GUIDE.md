@@ -139,8 +139,7 @@ The upgrade layer also:
   statement, it becomes licensed and the remaining open-copy candidates are tried.
 
 `--channels` limits a run to some channels (comma list). Some names in the list exist only for SeismoHub
-compatibility: `s2_oa`'s resolver is not wired into the candidate list yet, and `datacite_repo`, `gfz_repo`,
-`usgs_pubs`, `crossref_preprint` run inside `green_oa_cascade`.
+compatibility: `datacite_repo`, `gfz_repo`, `usgs_pubs`, `crossref_preprint` run inside `green_oa_cascade`.
 
 ### 3.2 The four acceptance checks
 

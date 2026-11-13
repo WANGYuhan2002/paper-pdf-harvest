@@ -14,7 +14,7 @@
 - **密钥：**配置了 Wiley TDM 令牌、Elsevier API 密钥和 OpenAlex 密钥。
 - **网络：**部分运行在机构网络内，Elsevier 订阅 XML 需要这一点。
 - **引擎版本：**这些运行跨越三天的开发期。旧报告里有些渠道名（`gfz_repo`、`hal_api`、`datacite_repo`、
-  `crossref_preprint`、`s2_oa`）是当时的独立步骤，现在由 `green_oa_cascade` 一起执行。
+  `crossref_preprint`）是当时的独立步骤，现在由 `green_oa_cascade` 一起执行；`s2_oa`（Semantic Scholar）后来已经去掉。
 
 每篇论文取所有运行中的最好结果：开放副本优于许可副本，许可副本优于什么都没有。
 
@@ -142,5 +142,5 @@
 - **礼貌访问上的缺口。**Crossref 的间隔（0.25 秒）不区分检索请求，而检索的公开限额是每秒 1 次。实际运行中它们与其他
   站点的请求交错进行，但大批量的引文清单应当设置带 `mailto` 的 `SEISMO_HARVEST_UA`。NCBI E-utilities 的兜底查询没有
   发送 `tool` / `email` 参数。
-- **未接入或只覆盖一部分的渠道。**`s2_oa`（Semantic Scholar）已登记但 resolver 没有接入。`ethrc` 只服务一个机构的知识库；
-  其他 DSpace 知识库只能通过 OpenAlex 的位置信息和 URL 改写来覆盖。
+- **只覆盖一部分的渠道。**`ethrc` 只服务一个机构的知识库；其他 DSpace 知识库只能通过 OpenAlex 的位置信息和 URL
+  改写来覆盖。（`s2_oa`，即 Semantic Scholar，已经去掉：它在这些运行里试了 27 次，一份副本都没找到，现在的引擎也从没调用过它。）

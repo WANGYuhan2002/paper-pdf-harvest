@@ -130,9 +130,8 @@ SeismoHub v2.3）为每组增加渠道，命令行总会装上它。
 - 出版商副本下载后再查一遍：如果前两页写着 "All rights reserved" 而没有开放许可声明，就改按许可副本处理，并继续
   尝试剩下的开放副本候选。
 
-`--channels` 可以把一次运行限定在部分渠道（逗号分隔）。列表里有几个名字只是为了与 SeismoHub 兼容：`s2_oa` 的
-resolver 还没有接入候选列表；`datacite_repo`、`gfz_repo`、`usgs_pubs`、`crossref_preprint` 都在
-`green_oa_cascade` 内部运行。
+`--channels` 可以把一次运行限定在部分渠道（逗号分隔）。列表里有几个名字只是为了与 SeismoHub 兼容：`datacite_repo`、
+`gfz_repo`、`usgs_pubs`、`crossref_preprint` 都在 `green_oa_cascade` 内部运行。
 
 ### 3.2 四道校验
 
