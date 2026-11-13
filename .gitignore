@@ -1,0 +1,37 @@
+# Harvested content, reports and caches: never commit them (licensed copies must stay on your machine)
+*.pdf
+open_pdfs/
+tdm_bundles/
+open_bundles/
+paper_bundles/
+literature_packs/
+packs/
+harvest_report.jsonl
+harvest_summary.tsv
+pending_zotero.csv
+pending_browser_fetch_*.tsv
+*.jsonl
+*.sqlite
+*.sqlite3
+*.db
+
+# Keys and settings
+.env
+*.env
+!.env.example
+keys.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+
+# OS and editors
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "paper-pdf-harvest"
+version = "1.0.0"
+description = "Verified, licence-aware full-text PDF harvesting for reading lists (the PDF engine of SeismoHub)"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.28",
+    "PyMuPDF>=1.23",
+    "python-dotenv>=1.0",
+]
+keywords = ["open access", "full text", "pdf", "text and data mining", "literature", "zotero", "seismology"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+paper-pdf-harvest = "paper_pdf_harvest.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/WANGYuhan2002/paper-pdf-harvest"
+SeismoHub = "https://github.com/WANGYuhan2002/seismohub"
+
+[tool.setuptools]
+packages = ["paper_pdf_harvest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,12 @@
+# Example reading list for paper-pdf-harvest: one entry per line, '#' starts a comment.
+# Try:  paper-pdf-harvest harvest --input-file examples/reading_list.txt --out-dir ~/pack --dry-run
+
+# a DOI: an open-access EGU / Copernicus article (PDF plus full-text XML, supplements and open reviews)
+10.5194/se-17-825-2026
+# a DOI link works too: a 1977 AGU paper (open copy if one exists; with a Wiley TDM token the licensed
+# version of record is kept in tdm_bundles/, local use only)
+https://doi.org/10.1029/JB082i020p02981
+# an arXiv ID or arXiv URL
+arXiv:1803.03211
+# a free-form citation: resolved through Crossref and accepted only if the record agrees with it
+Shapiro Campillo 2005 High-resolution surface-wave tomography from ambient seismic noise

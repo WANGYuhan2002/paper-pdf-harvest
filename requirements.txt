@@ -1,0 +1,5 @@
+# Runtime dependencies (the same as pyproject.toml). `pip install -e .` installs them and the
+# `paper-pdf-harvest` command; `pip install -r requirements.txt` is enough for `python -m paper_pdf_harvest`.
+requests>=2.28
+PyMuPDF>=1.23
+python-dotenv>=1.0
