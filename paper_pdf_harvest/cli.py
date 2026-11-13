@@ -21,7 +21,6 @@ import argparse
 import csv
 import datetime as dt
 import hashlib
-import html
 import json
 import os
 import re
@@ -74,16 +73,20 @@ def load_settings(env_file: str = "") -> Optional[Path]:
     return path
 
 
-def install_upgrades(cache_path: Optional[Path], readonly: bool) -> None:
+def install_upgrades(cache_path: Optional[Path], readonly: bool, keys_file: str = "") -> None:
+    """Install SeismoHub's upgrade layer. It loads the keys files as it installs, in the order of docs/KEYS.md
+    ($SEISMO_HARVEST_KEYS_FILE, ``keys_file``, ~/.config/seismo_harvester/keys.env), and a loaded key is never
+    overridden later, so ``keys_file`` must be given here rather than only to ``key_presence``."""
     from . import upgrades
 
-    upgrades.install_harvester_upgrades(fb, cache_path=cache_path, readonly=readonly)
+    upgrades.install_harvester_upgrades(fb, cache_path=cache_path, readonly=readonly,
+                                        keys_files=[keys_file] if keys_file else [])
 
 
 def build_harvester(*, cache_path: Optional[Path], readonly: bool, channels: Optional[Sequence[str]] = None,
-                    download_code: bool = False, http: Any = None) -> "fb.FullBundleHarvester":
+                    download_code: bool = False, http: Any = None, keys_file: str = "") -> "fb.FullBundleHarvester":
     """The harvester with SeismoHub's upgrade layer installed (the same engine SeismoHub runs)."""
-    install_upgrades(cache_path, readonly)
+    install_upgrades(cache_path, readonly, keys_file)
     return fb.FullBundleHarvester(http, channels=channels, attach_tdm=False, download_code=download_code)
 
 
@@ -158,47 +161,9 @@ def load_specs(dois: Iterable[str], queries: Iterable[str], input_files: Iterabl
     return out
 
 
-def arxiv_metadata(http: Any, arxiv_id: str) -> Dict[str, Any]:
-    """Title / authors / year of an arXiv preprint from the arXiv API. The title matters: the identity check
-    (gate 4) compares it with the first pages of the downloaded PDF."""
-    meta: Dict[str, Any] = {
-        "doi": f"10.48550/arXiv.{arxiv_id}" if _NEW_ARXIV.match(arxiv_id) else "", "arxiv_id": arxiv_id,
-        "title": "", "journal": "arXiv", "year": "", "authors": [], "link": f"https://arxiv.org/abs/{arxiv_id}",
-    }
-    res = http.get("https://export.arxiv.org/api/query?" + urllib.parse.urlencode(
-        {"id_list": arxiv_id, "max_results": "1"}), headers={"Accept": "application/atom+xml"})
-    if res.ok:
-        text = res.text()
-        entry = text.split("<entry>", 1)[1] if "<entry>" in text else ""
-        title = re.search(r"<title>(.*?)</title>", entry, re.S)
-        if title:
-            meta["title"] = " ".join(html.unescape(title.group(1)).split())
-        meta["authors"] = [" ".join(html.unescape(n).split()) for n in re.findall(r"<name>(.*?)</name>", entry, re.S)]
-        year = re.search(r"<published>(\d{4})", entry)
-        if year:
-            meta["year"] = year.group(1)
-    return meta
-
-
-CITATION_MIN_SHARE = 0.6  # share of the citation's words that must appear in the resolved Crossref record
-
-
-def citation_agrees(citation: str, meta: Dict[str, Any]) -> bool:
-    """Does a Crossref record plausibly answer a free-form citation? Its title, authors, year and journal must
-    contain most of the citation's words. Crossref ranks *something* first for almost any query, so without
-    this check a mistyped or unknown citation would quietly fetch an unrelated paper."""
-    words = [w for w in fb._tokens(citation) if len(w) >= 3 and w not in fb._STOPWORDS]
-    if not words:
-        return False
-    record = " ".join([str(meta.get("title") or ""), str(meta.get("journal") or ""), str(meta.get("year") or ""),
-                       " ".join(meta.get("authors") or [])])
-    vocab = set(fb._tokens(record))
-    hits = sum(1 for w in words if w in vocab)
-    return hits >= min(2, len(words)) and hits / len(words) >= CITATION_MIN_SHARE
-
-
 def resolve_citation(http: Any, citation: str) -> Dict[str, Any]:
-    """Free-form citation -> the first Crossref record that agrees with it (``citation_agrees``), else nothing."""
+    """Free-form citation -> the first Crossref record that agrees with it (``citations.citation_agrees``: most
+    of the citation's words in its title, authors, year and journal), else nothing."""
     unresolved = {"doi": "", "arxiv_id": "", "title": "", "journal": "", "year": "", "authors": [], "link": ""}
     res = http.get("https://api.crossref.org/works?" + urllib.parse.urlencode(
         {"query.bibliographic": citation, "rows": "5"}), headers={"Accept": "application/json"})
@@ -212,15 +177,15 @@ def resolve_citation(http: Any, citation: str) -> Dict[str, Any]:
         if item.get("type") in ("component", "dataset", "peer-review", "journal-issue"):
             continue
         meta = citations._meta_from_crossref_msg(item)
-        if meta.get("doi") and meta.get("title") and citation_agrees(citation, meta):
+        if meta.get("doi") and meta.get("title") and citations.citation_agrees(citation, meta):
             return meta
     return unresolved
 
 
 def resolve_spec(http: Any, spec: str) -> Dict[str, Any]:
     key = spec_key(spec)
-    if key.startswith("arxiv:"):
-        return arxiv_metadata(http, key[len("arxiv:"):])
+    if key.startswith("arxiv:"):  # title from the arXiv API: the identity check (gate 4) compares it with the PDF
+        return citations.arxiv_metadata(http, key[len("arxiv:"):])
     if key.startswith("doi:"):
         return citations.resolve_citation_to_metadata(http, spec)
     return resolve_citation(http, spec)
@@ -484,7 +449,7 @@ def cmd_harvest(args: argparse.Namespace, http: Any = None) -> int:
     channels = [c.strip() for c in args.channels.split(",") if c.strip()] or None
     try:
         harvester = build_harvester(cache_path=out_dir / CACHE_FILE, readonly=dry_run, channels=channels,
-                                    download_code=args.download_code, http=http)
+                                    download_code=args.download_code, http=http, keys_file=args.keys_file)
     except ValueError as exc:  # unknown channel name
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -760,7 +725,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 def cmd_keys(args: argparse.Namespace) -> int:
     env_path = load_settings(args.env_file)
-    install_upgrades(None, True)  # registers OPENALEX_API_KEY as a key name
+    install_upgrades(None, True, args.keys_file)  # registers OPENALEX_API_KEY as a key name and loads the keys
     present = key_presence(args.keys_file)
     files = [Path(p).expanduser() for p in ((os.environ.get("SEISMO_HARVEST_KEYS_FILE") or "").strip(),
                                             args.keys_file) if p] + [fb.DEFAULT_KEYS_FILE]

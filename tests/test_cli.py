@@ -4,6 +4,7 @@ from __future__ import annotations
 import builtins
 import csv
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -157,6 +158,36 @@ def test_keys_reports_presence_never_values(tmp_path, monkeypatch, capsys):
     assert TOKEN not in out
     assert "WILEY_TDM_TOKEN      set" in out and "ELSEVIER_API_KEY     set" in out
     assert "OPENALEX_API_KEY     not set" in out
+
+
+@pytest.fixture()
+def keys_file_and_default(tmp_path, monkeypatch):
+    """WILEY_TDM_TOKEN in the default keys file and in a --keys-file, with different values."""
+    default = tmp_path / "default_keys.env"
+    default.write_text(f'export WILEY_TDM_TOKEN="{TOKEN}-default"\n', encoding="utf-8")
+    monkeypatch.setattr(fb, "DEFAULT_KEYS_FILE", default)
+    keys = tmp_path / "keys.env"
+    keys.write_text(f'export WILEY_TDM_TOKEN="{TOKEN}-keys-file"\n', encoding="utf-8")
+    return keys
+
+
+def test_keys_file_beats_the_default_keys_file(keys_file_and_default, tmp_path, capsys):
+    """docs/KEYS.md: $SEISMO_HARVEST_KEYS_FILE, then --keys-file, then ~/.config/seismo_harvester/keys.env. The
+    upgrade layer loads the keys files when it is installed, and a loaded key is never overridden, so --keys-file
+    has to reach it."""
+    http = FakeHttp(routes())
+    assert cli.main(["harvest", "--doi", WILEY_DOI, "--out-dir", str(tmp_path / "pack"), "--dry-run",
+                     "--keys-file", str(keys_file_and_default)], http=http) == 0
+    sent = {h["Wiley-TDM-Client-Token"] for h in http.headers if "Wiley-TDM-Client-Token" in h}
+    assert sent == {f"{TOKEN}-keys-file"}
+    captured = capsys.readouterr()
+    assert TOKEN not in captured.out + captured.err
+
+
+def test_keys_command_reads_the_keys_file_first(keys_file_and_default, capsys):
+    assert cli.main(["keys", "--keys-file", str(keys_file_and_default)]) == 0
+    assert os.environ["WILEY_TDM_TOKEN"] == f"{TOKEN}-keys-file"
+    assert TOKEN not in capsys.readouterr().out
 
 
 def test_status_reads_metadata_only(harvested, monkeypatch, capsys):

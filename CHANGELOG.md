@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- `harvest --keys-file` and `keys --keys-file` now take precedence over `~/.config/seismo_harvester/keys.env`, as
+  [docs/KEYS.md](docs/KEYS.md) says. A key set in both files used to come from the default file.
+- The command line uses the synced `citations.arxiv_metadata` and `citations.citation_agrees` instead of its own
+  copies. The only difference: an arXiv ID that the arXiv API rejects no longer gets the title "Error".
+
 ## 1.0.0 (2026-11-13)
 
 First standalone release of SeismoHub's full-text PDF harvesting.
